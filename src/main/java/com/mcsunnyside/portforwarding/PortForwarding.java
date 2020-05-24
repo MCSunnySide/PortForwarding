@@ -4,6 +4,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public final class PortForwarding extends JavaPlugin {
     private Session session;
@@ -49,6 +50,20 @@ public final class PortForwarding extends JavaPlugin {
         } catch (JSchException e) {
             e.printStackTrace();
         }
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                if(!session.isConnected()){
+                    onDisable();
+                    onEnable(); //Reconnect
+                }else{
+                    try {
+                        session.sendKeepAliveMsg();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }.runTaskTimerAsynchronously(this,0,20);
 
     }
 
