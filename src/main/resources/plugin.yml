@@ -1,0 +1,4 @@
+name: PortForwarding
+version: ${project.version}
+main: com.mcsunnyside.portforwarding.PortForwarding
+api-version: 1.13

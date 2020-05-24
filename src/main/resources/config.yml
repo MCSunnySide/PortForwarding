@@ -1,0 +1,8 @@
+ssh-host: 1.1.1.1
+ssh-usr: root
+ssh-pwd: null
+ssh-port: 22
+private-key: /path
+passphrase: somepassword
+rules:
+  - "local:remote"
