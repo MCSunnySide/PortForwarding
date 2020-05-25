@@ -97,6 +97,7 @@ public final class PortForwarding extends JavaPlugin {
     public void onDisable() {
         // Plugin shutdown logic
         disconnect();
+        timer.cancel();
     }
     private boolean loaded = false;
     private void loadKey(){
