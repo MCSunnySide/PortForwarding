@@ -7,17 +7,38 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public final class PortForwarding extends JavaPlugin {
     private Session session;
-    private JSch jSch = new JSch();
+    private final JSch jSch = new JSch();
     private BukkitTask task;
+    private Timer timer = new Timer();
     @Override
     public void onEnable() {
         // Plugin startup logic
         saveDefaultConfig();
+        loadKey();
+        connect();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if(session == null || !session.isConnected()){
+                    disconnect();
+                    connect();
+                }else{
+                    try {
+                        session.sendKeepAliveMsg();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }, 0, 5000);
+    }
 
+    private void connect(){
         try {
-            loadKey();
             session = jSch.getSession(getConfig().getString("ssh-usr"),getConfig().getString("ssh-host"),getConfig().getInt("ssh-port"));
             session.setHostKeyRepository(jSch.getHostKeyRepository());
             if(getConfig().getString("ssh-pwd") != null){
@@ -25,7 +46,7 @@ public final class PortForwarding extends JavaPlugin {
             }
             getLogger().info("Connecting to remote SSH server...");
             session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
+            session.connect(300000);
             if(!session.isConnected()){
                 getLogger().warning("Failed connect to remote SSH server...");
                 return;
@@ -53,27 +74,9 @@ public final class PortForwarding extends JavaPlugin {
         } catch (JSchException e) {
             e.printStackTrace();
         }
-       task = new BukkitRunnable(){
-            @Override
-            public void run() {
-                if(!session.isConnected()){
-                    onDisable();
-                    onEnable(); //Reconnect
-                }else{
-                    try {
-                        session.sendKeepAliveMsg();
-                    } catch (Exception ignored) {
-                    }
-                }
-            }
-        }.runTaskTimerAsynchronously(this,0,20);
-
     }
 
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
-        task.cancel();
+    private void disconnect(){
         getConfig().getStringList("rules").forEach((rule)->{
             //LOCAL PORT:REMOTE PORT
             String[] parameters = rule.split(":");
@@ -88,6 +91,12 @@ public final class PortForwarding extends JavaPlugin {
             }
         });
         session.disconnect();
+    }
+    @Override
+    public void onDisable() {
+        // Plugin shutdown logic
+        task.cancel();
+        disconnect();
     }
     private boolean loaded = false;
     private void loadKey(){
