@@ -4,7 +4,6 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Timer;
@@ -13,8 +12,7 @@ import java.util.TimerTask;
 public final class PortForwarding extends JavaPlugin {
     private Session session;
     private final JSch jSch = new JSch();
-    private BukkitTask task;
-    private Timer timer = new Timer();
+    private final Timer timer = new Timer();
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -24,6 +22,9 @@ public final class PortForwarding extends JavaPlugin {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                if(!isEnabled()){
+                    return;
+                }
                 if(session == null || !session.isConnected()){
                     disconnect();
                     connect();
@@ -95,7 +96,6 @@ public final class PortForwarding extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        task.cancel();
         disconnect();
     }
     private boolean loaded = false;
