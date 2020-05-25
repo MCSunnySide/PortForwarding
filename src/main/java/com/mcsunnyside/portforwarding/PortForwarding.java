@@ -5,16 +5,19 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class PortForwarding extends JavaPlugin {
     private Session session;
+    private JSch jSch = new JSch();
+    private BukkitTask task;
     @Override
     public void onEnable() {
         // Plugin startup logic
         saveDefaultConfig();
-        JSch jSch = new JSch();
+
         try {
-            jSch.addIdentity(getConfig().getString("private-key"),getConfig().getString("passphrase"));
+            loadKey();
             session = jSch.getSession(getConfig().getString("ssh-usr"),getConfig().getString("ssh-host"),getConfig().getInt("ssh-port"));
             session.setHostKeyRepository(jSch.getHostKeyRepository());
             if(getConfig().getString("ssh-pwd") != null){
@@ -50,7 +53,7 @@ public final class PortForwarding extends JavaPlugin {
         } catch (JSchException e) {
             e.printStackTrace();
         }
-        new BukkitRunnable(){
+       task = new BukkitRunnable(){
             @Override
             public void run() {
                 if(!session.isConnected()){
@@ -70,6 +73,7 @@ public final class PortForwarding extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        task.cancel();
         getConfig().getStringList("rules").forEach((rule)->{
             //LOCAL PORT:REMOTE PORT
             String[] parameters = rule.split(":");
@@ -84,5 +88,16 @@ public final class PortForwarding extends JavaPlugin {
             }
         });
         session.disconnect();
+    }
+    private boolean loaded = false;
+    private void loadKey(){
+        try {
+            if(!loaded) {
+                jSch.addIdentity(getConfig().getString("private-key"), getConfig().getString("passphrase"));
+                loaded = true;
+            }
+        } catch (JSchException e) {
+            e.printStackTrace();
+        }
     }
 }
