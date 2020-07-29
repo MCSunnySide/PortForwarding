@@ -5,7 +5,7 @@ A bukkit plugin use JSch to forwarding local port to remote server through SSH T
 https://ci.codemc.io/job/Ghost-chu/job/PortForwarding/
 
 ## Configuration
-```
+```YAML
 ssh-host: 1.1.1.1
 ssh-usr: root
 ssh-pwd: 12345 #"" for disable
