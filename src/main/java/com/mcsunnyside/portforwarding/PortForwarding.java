@@ -1,5 +1,6 @@
 package com.mcsunnyside.portforwarding;
 
+import com.google.common.base.Strings;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -42,7 +43,7 @@ public final class PortForwarding extends JavaPlugin {
         try {
             session = jSch.getSession(getConfig().getString("ssh-usr"),getConfig().getString("ssh-host"),getConfig().getInt("ssh-port"));
             session.setHostKeyRepository(jSch.getHostKeyRepository());
-            if(getConfig().getString("ssh-pwd") != null){
+            if(Strings.isNullOrEmpty(getConfig().getString("ssh-pwd"))){
                 session.setPassword(getConfig().getString("ssh-pwd"));
             }
             getLogger().info("Connecting to remote SSH server...");
@@ -103,8 +104,10 @@ public final class PortForwarding extends JavaPlugin {
     private void loadKey(){
         try {
             if(!loaded) {
-                jSch.addIdentity(getConfig().getString("private-key"), getConfig().getString("passphrase"));
-                loaded = true;
+                if(Strings.isNullOrEmpty(getConfig().getString("private-key"))) {
+                    jSch.addIdentity(getConfig().getString("private-key"), getConfig().getString("passphrase"));
+                    loaded = true;
+                }
             }
         } catch (JSchException e) {
             e.printStackTrace();
